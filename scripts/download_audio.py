@@ -54,7 +54,7 @@ def fetch_playlist_videos(playlist_url: str) -> List[Dict]:
         'no_warnings': False,
         'extractor_retries': 3,
         'ignoreerrors': True,  # Don't abort if individual entries fail
-        'js_runtimes': 'nodejs',  # Use Node.js (pre-installed on GitHub Actions)
+        'js_runtimes': {'nodejs': {}},  # Use Node.js (pre-installed on GitHub Actions)
     }
 
     print(f"Fetching playlist metadata from: {playlist_url}")
@@ -135,7 +135,7 @@ def download_video_audio(video_url: str, video_id: str, downloads_dir: Path) -> 
         'no_warnings': False,
         'retries': 3,
         'extractor_retries': 3,
-        'js_runtimes': 'nodejs',  # Use Node.js (pre-installed on GitHub Actions)
+        'js_runtimes': {'nodejs': {}},  # Use Node.js (pre-installed on GitHub Actions)
     }
 
     try:
@@ -185,7 +185,7 @@ def get_full_video_metadata(video_url: str) -> Dict:
     ydl_opts = {
         'quiet': True,
         'no_warnings': True,
-        'js_runtimes': 'nodejs',
+        'js_runtimes': {'nodejs': {}},
     }
 
     try:
