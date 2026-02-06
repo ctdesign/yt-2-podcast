@@ -51,6 +51,16 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Verify PLAYLIST_URL is set
+        env:
+          PLAYLIST_URL: ${{ secrets.PLAYLIST_URL }}
+        run: |
+          if [ -z "$PLAYLIST_URL" ]; then
+            echo "::error::PLAYLIST_URL secret is not set. Go to Settings > Secrets and variables > Actions and add it."
+            exit 1
+          fi
+          echo "PLAYLIST_URL is configured"
+
       - name: Download new videos
         env:
           PLAYLIST_URL: ${{ secrets.PLAYLIST_URL }}
@@ -98,12 +108,23 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ -f state/processed_videos.json ]; then
-            VIDEO_COUNT=$(python -c "import json; data=json.load(open('state/processed_videos.json')); print(len(data.get('videos', [])))")
-            echo "✓ Total episodes: $VIDEO_COUNT" >> $GITHUB_STEP_SUMMARY
+            python -c "
+          import json
+          data = json.load(open('state/processed_videos.json'))
+          videos = data.get('videos', [])
+          uploaded = [v for v in videos if v.get('audio_url')]
+          print(f'Total processed: {len(videos)}')
+          print(f'Uploaded with audio URL: {len(uploaded)}')
+          if not videos:
+              print('WARNING: No videos in state - check Download step logs')
+          elif not uploaded:
+              print('WARNING: Videos processed but none uploaded - check Upload step logs')
+          " >> $GITHUB_STEP_SUMMARY
           fi
 
           if [ -f feed/podcast.xml ]; then
-            echo "✓ RSS feed generated" >> $GITHUB_STEP_SUMMARY
+            EPISODE_COUNT=$(grep -c '<item>' feed/podcast.xml || echo "0")
             echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Episodes in feed: $EPISODE_COUNT" >> $GITHUB_STEP_SUMMARY
             echo "Feed URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/podcast.xml" >> $GITHUB_STEP_SUMMARY
           fi

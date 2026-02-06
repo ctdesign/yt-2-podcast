@@ -52,6 +52,8 @@ def fetch_playlist_videos(playlist_url: str) -> List[Dict]:
         'extract_flat': True,  # Don't download, just get metadata
         'quiet': False,
         'no_warnings': False,
+        'extractor_retries': 3,
+        'ignoreerrors': True,  # Don't abort if individual entries fail
     }
 
     print(f"Fetching playlist metadata from: {playlist_url}")
@@ -59,14 +61,36 @@ def fetch_playlist_videos(playlist_url: str) -> List[Dict]:
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         playlist_info = ydl.extract_info(playlist_url, download=False)
 
-        if not playlist_info or 'entries' not in playlist_info:
+        if not playlist_info:
             raise RuntimeError(
-                f"No videos found in playlist: {playlist_url}\n"
-                "Check that the PLAYLIST_URL secret is set to a valid YouTube playlist URL."
+                f"yt-dlp returned no data for: {playlist_url}\n"
+                "Check that the PLAYLIST_URL secret is set to a valid YouTube playlist URL.\n"
+                "Example format: https://www.youtube.com/playlist?list=PLxxxxxxxx"
             )
 
+        # Handle single video URLs (not a playlist)
+        if playlist_info.get('_type') != 'playlist' and 'entries' not in playlist_info:
+            print(f"Warning: URL appears to be a single video, not a playlist")
+            print(f"  Type: {playlist_info.get('_type', 'unknown')}")
+            print(f"  Title: {playlist_info.get('title', 'unknown')}")
+            if playlist_info.get('id'):
+                return [{
+                    'video_id': playlist_info['id'],
+                    'title': playlist_info.get('title', 'Unknown Title'),
+                    'url': f"https://www.youtube.com/watch?v={playlist_info['id']}",
+                    'upload_date': playlist_info.get('upload_date'),
+                }]
+            raise RuntimeError(
+                f"URL is not a playlist and has no video ID: {playlist_url}\n"
+                "Use a playlist URL like: https://www.youtube.com/playlist?list=PLxxxxxxxx"
+            )
+
+        entries = list(playlist_info.get('entries', []))
+        print(f"Playlist title: {playlist_info.get('title', 'unknown')}")
+        print(f"Raw entries count: {len(entries)}")
+
         videos = []
-        for entry in playlist_info['entries']:
+        for entry in entries:
             if entry:  # Some entries might be None if video is unavailable
                 videos.append({
                     'video_id': entry['id'],
@@ -77,7 +101,8 @@ def fetch_playlist_videos(playlist_url: str) -> List[Dict]:
 
         if not videos:
             raise RuntimeError(
-                "Playlist was fetched but contained no accessible videos.\n"
+                f"Playlist was fetched but contained no accessible videos.\n"
+                f"Playlist title: {playlist_info.get('title', 'unknown')}\n"
                 "All entries may be private, deleted, or region-blocked."
             )
 
@@ -107,6 +132,8 @@ def download_video_audio(video_url: str, video_id: str, downloads_dir: Path) -> 
         'outtmpl': str(downloads_dir / f'{video_id}.%(ext)s'),
         'quiet': False,
         'no_warnings': False,
+        'retries': 3,
+        'extractor_retries': 3,
     }
 
     try:
