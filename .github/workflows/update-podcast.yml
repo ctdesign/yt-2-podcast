@@ -1,0 +1,84 @@
+name: Update Podcast Feed
+
+on:
+  # Run daily at 6:00 AM UTC
+  schedule:
+    - cron: '0 6 * * *'
+
+  # Allow manual workflow trigger
+  workflow_dispatch:
+
+# Required permissions for creating releases and committing changes
+permissions:
+  contents: write
+
+jobs:
+  update-podcast:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for proper git operations
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'  # Cache pip dependencies
+
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Verify FFmpeg installation
+        run: ffmpeg -version
+
+      - name: Install Python dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Download new videos
+        env:
+          PLAYLIST_URL: ${{ secrets.PLAYLIST_URL }}
+        run: |
+          python -m scripts.download_audio
+
+      - name: Upload to GitHub Releases
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          python -m scripts.upload_to_release
+
+      - name: Generate RSS feed
+        run: |
+          python -m scripts.generate_rss
+
+      - name: Commit state and feed updates
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add state/processed_videos.json feed/podcast.xml
+          git diff --quiet && git diff --staged --quiet || \
+            git commit -m "Update podcast feed [skip ci]" && git push
+
+      - name: Workflow summary
+        if: always()
+        run: |
+          echo "### Podcast Update Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f state/processed_videos.json ]; then
+            VIDEO_COUNT=$(python -c "import json; data=json.load(open('state/processed_videos.json')); print(len(data.get('videos', [])))")
+            echo "✓ Total episodes: $VIDEO_COUNT" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ -f feed/podcast.xml ]; then
+            echo "✓ RSS feed generated" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Feed URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/podcast.xml" >> $GITHUB_STEP_SUMMARY
+          fi
