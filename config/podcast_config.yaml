@@ -4,14 +4,14 @@
 # Basic Information
 title: "My YouTube Podcast"
 description: "Audio versions of videos from my favorite YouTube playlist"
-author: "Your Name"
-email: "your.email@example.com"  # Optional but recommended for podcast platforms
+author: "Chris"
+#email: "your.email@example.com"  # Optional but recommended for podcast platforms
 
 # Website/Link
-link: "https://yourusername.github.io/yt-2-podcast/"
+link: "https://ctdesign.github.io/yt-2-podcast/"
 
 # Language (use ISO 639-1 code)
-language: "en-us"
+language: "en-uk"
 
 # iTunes Category
 # Common options: Technology, Education, News, Comedy, Business, Science, Arts, Music
@@ -22,7 +22,7 @@ category: "Technology"
 # IMPORTANT: Image should be 1400x1400px minimum, 3000x3000px maximum
 # Formats: JPG or PNG
 # The image must be hosted somewhere publicly accessible (e.g., GitHub, Imgur, etc.)
-image_url: "https://example.com/podcast-cover-art.jpg"
+#image_url: "https://example.com/podcast-cover-art.jpg"
 
 # Explicit Content
 # Set to true if your podcast contains explicit content (profanity, adult themes, etc.)
