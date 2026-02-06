@@ -8,13 +8,23 @@ on:
   # Allow manual workflow trigger
   workflow_dispatch:
 
-# Required permissions for creating releases and committing changes
+# Required permissions for creating releases, committing changes, and deploying pages
 permissions:
   contents: write
+  pages: write
+  id-token: write
+
+# Only allow one deployment at a time
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   update-podcast:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Checkout repository
@@ -55,6 +65,9 @@ jobs:
           python -m scripts.upload_to_release
 
       - name: Generate RSS feed
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
         run: |
           python -m scripts.generate_rss
 
@@ -65,6 +78,18 @@ jobs:
           git add state/processed_videos.json feed/podcast.xml
           git diff --quiet && git diff --staged --quiet || \
             git commit -m "Update podcast feed [skip ci]" && git push
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './feed'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 
       - name: Workflow summary
         if: always()

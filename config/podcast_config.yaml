@@ -10,6 +10,10 @@ author: "Chris"
 # Website/Link
 link: "https://ctdesign.github.io/yt-2-podcast/"
 
+# Feed URL (where the RSS feed will be hosted)
+# This is used for the self-referencing link in the RSS feed
+feed_url: "https://ctdesign.github.io/yt-2-podcast/podcast.xml"
+
 # Language (use ISO 639-1 code)
 language: "en-uk"
 
