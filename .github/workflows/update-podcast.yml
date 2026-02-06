@@ -46,6 +46,9 @@ jobs:
       - name: Verify FFmpeg installation
         run: ffmpeg -version
 
+      - name: Verify Node.js is available (required by yt-dlp for YouTube)
+        run: node --version
+
       - name: Install Python dependencies
         run: |
           pip install --upgrade pip
