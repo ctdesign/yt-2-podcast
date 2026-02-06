@@ -56,30 +56,33 @@ def fetch_playlist_videos(playlist_url: str) -> List[Dict]:
 
     print(f"Fetching playlist metadata from: {playlist_url}")
 
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            playlist_info = ydl.extract_info(playlist_url, download=False)
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        playlist_info = ydl.extract_info(playlist_url, download=False)
 
-            if not playlist_info or 'entries' not in playlist_info:
-                print("No videos found in playlist")
-                return []
+        if not playlist_info or 'entries' not in playlist_info:
+            raise RuntimeError(
+                f"No videos found in playlist: {playlist_url}\n"
+                "Check that the PLAYLIST_URL secret is set to a valid YouTube playlist URL."
+            )
 
-            videos = []
-            for entry in playlist_info['entries']:
-                if entry:  # Some entries might be None if video is unavailable
-                    videos.append({
-                        'video_id': entry['id'],
-                        'title': entry.get('title', 'Unknown Title'),
-                        'url': f"https://www.youtube.com/watch?v={entry['id']}",
-                        'upload_date': entry.get('upload_date'),  # Format: YYYYMMDD
-                    })
+        videos = []
+        for entry in playlist_info['entries']:
+            if entry:  # Some entries might be None if video is unavailable
+                videos.append({
+                    'video_id': entry['id'],
+                    'title': entry.get('title', 'Unknown Title'),
+                    'url': f"https://www.youtube.com/watch?v={entry['id']}",
+                    'upload_date': entry.get('upload_date'),  # Format: YYYYMMDD
+                })
 
-            print(f"Found {len(videos)} videos in playlist")
-            return videos
+        if not videos:
+            raise RuntimeError(
+                "Playlist was fetched but contained no accessible videos.\n"
+                "All entries may be private, deleted, or region-blocked."
+            )
 
-    except Exception as e:
-        print(f"Error fetching playlist: {e}")
-        return []
+        print(f"Found {len(videos)} videos in playlist")
+        return videos
 
 
 def download_video_audio(video_url: str, video_id: str, downloads_dir: Path) -> bool:

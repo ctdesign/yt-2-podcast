@@ -1,5 +1,6 @@
 """Generate podcast RSS feed from processed videos."""
 
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -58,6 +59,17 @@ def create_feed_generator(config: dict) -> FeedGenerator:
     fg.description(config['description'])
     fg.link(href=config['link'], rel='alternate')
     fg.language(config['language'])
+
+    # Add self-referencing feed link (required by podcast apps)
+    feed_url = config.get('feed_url')
+    if not feed_url:
+        # Build feed URL from environment if not in config
+        repo_owner = os.environ.get('GITHUB_REPOSITORY_OWNER', '')
+        repo_name = os.environ.get('GITHUB_REPOSITORY', '').split('/')[-1] if os.environ.get('GITHUB_REPOSITORY') else ''
+        if repo_owner and repo_name:
+            feed_url = f"https://{repo_owner}.github.io/{repo_name}/podcast.xml"
+    if feed_url:
+        fg.link(href=feed_url, rel='self', type='application/rss+xml')
 
     # Set podcast-specific metadata
     fg.podcast.itunes_author(config.get('author', 'Unknown'))
