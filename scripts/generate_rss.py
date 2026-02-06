@@ -72,8 +72,11 @@ def create_feed_generator(config: dict) -> FeedGenerator:
         fg.podcast.itunes_image(config['image_url'])
         fg.image(url=config['image_url'], title=config['title'], link=config['link'])
 
-    # Set explicit flag
-    fg.podcast.itunes_explicit(config.get('explicit', False))
+    # Set explicit flag (feedgen expects 'yes', 'no', or 'clean' as strings)
+    explicit_value = config.get('explicit', False)
+    if isinstance(explicit_value, bool):
+        explicit_value = 'yes' if explicit_value else 'no'
+    fg.podcast.itunes_explicit(explicit_value)
 
     # Set owner info if provided
     if config.get('email'):
@@ -124,7 +127,7 @@ def add_episode_to_feed(fg: FeedGenerator, video: dict) -> None:
 
     # Set iTunes-specific metadata
     fe.podcast.itunes_duration(video['duration'])
-    fe.podcast.itunes_explicit(False)
+    fe.podcast.itunes_explicit('no')
 
     # Use video title as summary
     fe.podcast.itunes_summary(video['title'])

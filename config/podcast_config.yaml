@@ -25,7 +25,8 @@ category: "Technology"
 image_url: "https://example.com/podcast-cover-art.jpg"
 
 # Explicit Content
-# Set to true if your podcast contains explicit content (profanity, adult themes, etc.)
+# Options: false (or 'no'), true (or 'yes'), or 'clean'
+# Set to true/'yes' if your podcast contains explicit content (profanity, adult themes, etc.)
 explicit: false
 
 # Optional: Subcategory (if needed)
