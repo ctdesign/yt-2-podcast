@@ -20,12 +20,27 @@ from scripts.utils import (
 )
 
 
-# Shared yt-dlp options for YouTube bot detection bypass.
-# bgutil-ytdlp-pot-provider auto-registers as a yt-dlp plugin and
-# generates PO tokens via Node.js (no external server needed).
-YDL_BASE_OPTS = {
-    'js_runtimes': {'node': {}},
-}
+# Path to cookies file (set up by the workflow from YT_COOKIES_B64 secret)
+COOKIES_FILE = '/tmp/yt_cookies.txt'
+
+
+def get_base_ydl_opts() -> dict:
+    """
+    Build shared yt-dlp options including cookies if available.
+
+    Returns:
+        Dictionary of yt-dlp options
+    """
+    opts = {}
+
+    # Use cookies file if it exists (exported from browser, stored as secret)
+    if Path(COOKIES_FILE).exists():
+        print(f"Using YouTube cookies from {COOKIES_FILE}")
+        opts['cookiefile'] = COOKIES_FILE
+    else:
+        print("No cookies file found - YouTube may block downloads from CI")
+
+    return opts
 
 
 def get_playlist_url() -> str:
@@ -58,7 +73,7 @@ def fetch_playlist_videos(playlist_url: str) -> List[Dict]:
         List of video metadata dictionaries
     """
     ydl_opts = {
-        **YDL_BASE_OPTS,
+        **get_base_ydl_opts(),
         'extract_flat': True,  # Don't download, just get metadata
         'quiet': False,
         'no_warnings': False,
@@ -133,7 +148,7 @@ def download_video_audio(video_url: str, video_id: str, downloads_dir: Path) -> 
         True if download successful, False otherwise
     """
     ydl_opts = {
-        **YDL_BASE_OPTS,
+        **get_base_ydl_opts(),
         'format': 'bestaudio/best',
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
@@ -192,7 +207,7 @@ def get_full_video_metadata(video_url: str) -> Dict:
         Dictionary with full video metadata
     """
     ydl_opts = {
-        **YDL_BASE_OPTS,
+        **get_base_ydl_opts(),
         'quiet': True,
         'no_warnings': True,
     }

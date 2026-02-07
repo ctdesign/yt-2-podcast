@@ -1,9 +1,6 @@
 # YouTube downloading and processing
 yt-dlp>=2025.05.22
 
-# YouTube PO token generation (bypasses bot detection in CI)
-bgutil-ytdlp-pot-provider>=0.7.1
-
 # RSS/Podcast feed generation
 feedgen>=1.0.0
 
