@@ -1,6 +1,7 @@
 """Download audio from YouTube playlist and convert to MP3."""
 
 import os
+import random
 import sys
 import time
 from datetime import datetime
@@ -17,6 +18,20 @@ from scripts.utils import (
     load_state,
     save_state
 )
+
+
+# Shared yt-dlp options for YouTube bot detection bypass
+YDL_BASE_OPTS = {
+    'js_runtimes': {'node': {}},
+    'extractor_args': {
+        'youtube': {
+            'player_client': ['mweb'],
+        },
+        'youtubepot-bgutilhttp': {
+            'base_url': ['http://localhost:4416'],
+        },
+    },
+}
 
 
 def get_playlist_url() -> str:
@@ -49,12 +64,12 @@ def fetch_playlist_videos(playlist_url: str) -> List[Dict]:
         List of video metadata dictionaries
     """
     ydl_opts = {
+        **YDL_BASE_OPTS,
         'extract_flat': True,  # Don't download, just get metadata
         'quiet': False,
         'no_warnings': False,
         'extractor_retries': 3,
         'ignoreerrors': True,  # Don't abort if individual entries fail
-        'js_runtimes': {'node': {}},  # Use Node.js (pre-installed on GitHub Actions)
     }
 
     print(f"Fetching playlist metadata from: {playlist_url}")
@@ -124,6 +139,7 @@ def download_video_audio(video_url: str, video_id: str, downloads_dir: Path) -> 
         True if download successful, False otherwise
     """
     ydl_opts = {
+        **YDL_BASE_OPTS,
         'format': 'bestaudio/best',
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
@@ -135,7 +151,6 @@ def download_video_audio(video_url: str, video_id: str, downloads_dir: Path) -> 
         'no_warnings': False,
         'retries': 3,
         'extractor_retries': 3,
-        'js_runtimes': {'node': {}},  # Use Node.js (pre-installed on GitHub Actions)
     }
 
     try:
@@ -183,9 +198,9 @@ def get_full_video_metadata(video_url: str) -> Dict:
         Dictionary with full video metadata
     """
     ydl_opts = {
+        **YDL_BASE_OPTS,
         'quiet': True,
         'no_warnings': True,
-        'js_runtimes': {'node': {}},
     }
 
     try:
@@ -286,9 +301,9 @@ def process_new_videos() -> List[Dict]:
 
         print(f"Processed: {video_info['title']} ({duration}, {file_size} bytes)")
 
-        # Add delay to avoid rate limiting
+        # Add delay to avoid rate limiting (randomized to look less bot-like)
         if idx < len(new_videos):
-            time.sleep(2)
+            time.sleep(random.uniform(5, 10))
 
     return newly_processed
 
