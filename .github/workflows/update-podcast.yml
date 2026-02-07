@@ -16,6 +16,14 @@ jobs:
   update-podcast:
     runs-on: ubuntu-latest
 
+    services:
+      # PO token provider - generates YouTube Proof of Origin tokens
+      # to bypass bot detection on datacenter IPs
+      pot-provider:
+        image: brainicism/bgutil-ytdlp-pot-provider
+        ports:
+          - 4416:4416
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
