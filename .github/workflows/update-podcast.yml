@@ -8,23 +8,13 @@ on:
   # Allow manual workflow trigger
   workflow_dispatch:
 
-# Required permissions for creating releases, committing changes, and deploying pages
+# Required permissions for creating releases and committing changes
 permissions:
   contents: write
-  pages: write
-  id-token: write
-
-# Only allow one deployment at a time
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
 
 jobs:
   update-podcast:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Checkout repository
@@ -92,18 +82,6 @@ jobs:
           git diff --quiet && git diff --staged --quiet || \
             git commit -m "Update podcast feed [skip ci]" && git push
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: './feed'
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-
       - name: Workflow summary
         if: always()
         run: |
@@ -129,5 +107,5 @@ jobs:
             EPISODE_COUNT=$(grep -c '<item>' feed/podcast.xml || echo "0")
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "Episodes in feed: $EPISODE_COUNT" >> $GITHUB_STEP_SUMMARY
-            echo "Feed URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/podcast.xml" >> $GITHUB_STEP_SUMMARY
+            echo "Feed URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/feed/podcast.xml" >> $GITHUB_STEP_SUMMARY
           fi

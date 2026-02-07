@@ -67,7 +67,7 @@ def create_feed_generator(config: dict) -> FeedGenerator:
         repo_owner = os.environ.get('GITHUB_REPOSITORY_OWNER', '')
         repo_name = os.environ.get('GITHUB_REPOSITORY', '').split('/')[-1] if os.environ.get('GITHUB_REPOSITORY') else ''
         if repo_owner and repo_name:
-            feed_url = f"https://{repo_owner}.github.io/{repo_name}/podcast.xml"
+            feed_url = f"https://{repo_owner}.github.io/{repo_name}/feed/podcast.xml"
     if feed_url:
         fg.link(href=feed_url, rel='self', type='application/rss+xml')
 
