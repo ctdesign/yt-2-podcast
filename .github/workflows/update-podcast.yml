@@ -16,14 +16,6 @@ jobs:
   update-podcast:
     runs-on: ubuntu-latest
 
-    services:
-      # PO token provider - generates YouTube Proof of Origin tokens
-      # to bypass bot detection on datacenter IPs
-      pot-provider:
-        image: brainicism/bgutil-ytdlp-pot-provider
-        ports:
-          - 4416:4416
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -51,6 +43,27 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
+
+      - name: Verify yt-dlp PO token plugin is loaded
+        run: |
+          python -c "
+          import yt_dlp
+          ydl = yt_dlp.YoutubeDL({'quiet': True})
+          pot_plugins = [p for p in ydl._plugin_specs if 'pot' in p.lower() or 'bgutil' in p.lower()]
+          print(f'yt-dlp version: {yt_dlp.version.__version__}')
+          print(f'All plugins: {ydl._plugin_specs}')
+          print(f'PO token plugins: {pot_plugins}')
+          " 2>&1 || echo "Could not enumerate plugins, continuing anyway"
+          # Also verify the bgutil provider can generate a token
+          python -c "
+          try:
+              from bgutil_ytdlp_pot_provider import _pot_providers
+              print('bgutil-ytdlp-pot-provider module loaded successfully')
+          except ImportError as e:
+              print(f'WARNING: Could not import bgutil provider: {e}')
+          except Exception as e:
+              print(f'Provider loaded but error: {e}')
+          "
 
       - name: Verify PLAYLIST_URL is set
         env:

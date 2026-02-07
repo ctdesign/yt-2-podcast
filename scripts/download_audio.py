@@ -20,17 +20,11 @@ from scripts.utils import (
 )
 
 
-# Shared yt-dlp options for YouTube bot detection bypass
+# Shared yt-dlp options for YouTube bot detection bypass.
+# bgutil-ytdlp-pot-provider auto-registers as a yt-dlp plugin and
+# generates PO tokens via Node.js (no external server needed).
 YDL_BASE_OPTS = {
     'js_runtimes': {'node': {}},
-    'extractor_args': {
-        'youtube': {
-            'player_client': ['mweb'],
-        },
-        'youtubepot-bgutilhttp': {
-            'base_url': ['http://localhost:4416'],
-        },
-    },
 }
 
 
